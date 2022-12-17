@@ -1,0 +1,171 @@
+#FOR CLEANING DATASET: tokenized, stop words removed, lemmatized. final lexicon written to a text file
+#done in chunks of files as dataset too large
+import os
+import json 
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.corpus import wordnet
+
+from nltk.stem import WordNetLemmatizer
+
+
+lemm = WordNetLemmatizer()
+
+stop_words = stopwords.words('english') 
+
+mypath = "E:\sample" #folder containing json files 
+directories = os.listdir(mypath)
+lexicon = {}
+
+docID = 0
+
+finaldocs = {}
+titles = "a" #will have title for each doc (dictionary)
+
+lexicon= {}
+wordID = 0
+
+dictList= []
+fwdindex = {}
+outerdict = {}
+
+
+def tokenize(dict):
+    tokens = []
+    noStopWords = []
+    tokens.append(word_tokenize(dict["content"])) #list of lists
+    for lists in tokens: 
+        for word in lists:
+            if (word.isalnum() and word.casefold() not in stop_words):
+                noStopWords.append(word)
+    return noStopWords
+
+
+
+def lemmatize(wordlist):
+    wordsfinal= []
+    wordlist = nltk.pos_tag(wordlist) #part of speech tags added, list of tuples
+    for word in wordlist:
+        if(word[1].startswith('J')):
+            pos = wordnet.ADJ
+        elif(word[1].startswith('V')):
+            pos = wordnet.VERB
+        elif(word[1].startswith('R')):
+            pos = wordnet.ADV
+        else:
+            pos = wordnet.NOUN
+        wordsfinal.append(lemm.lemmatize(word[0], pos))
+    return wordsfinal
+
+def makeFile(name):
+    json_object = json.dumps(finaldocs)
+    with open(name, "a", encoding='utf-8') as finalfile:
+        finalfile.write(json_object)
+
+
+def createLexicon(wordlist, wordID):
+    for word in wordlist:
+        if(word in lexicon):
+            pass
+        else:
+            lexicon.update({word:wordID})
+            wordID+=1
+
+def tokenizetitles(dict):
+    tokens = []
+    noStopWords = []
+    tokens.append(word_tokenize(dict["content"])) #list of lists
+    for lists in tokens: 
+        for word in lists:
+            if (word.isalnum() and word.casefold() not in stop_words):
+                noStopWords.append(word)
+    return noStopWords
+
+finalpath = "E:\codes\python\\finalfiles"
+
+titleID = 0
+titlelex = {}
+
+#TOKENS & WITHOUTSTOPWORDS: in ONE iteration, needs to have content of ONE ARTICLE (dictionary!)
+#FINALDOCS: in ONE iteration, needs to have content OF ONE JSON FILE!!
+
+for file in directories: #369, 911truth
+    name = finalpath+ "\\" +file
+    file = mypath+"\\"+file
+    myfile = open(file)
+    data = json.load(myfile) #returns a list(of dictionaries?)
+    for dict in data: #i=each article (each dictionary) in data
+        finaldocs.clear()
+        titles = dict["title"]
+
+        #CONTENT:
+        withoutStopWords = tokenize(dict)
+        finalWords = lemmatize(withoutStopWords)
+
+        #TITLES:
+        tokenizedTitles = tokenizetitles(dict)
+        finalTitles = lemmatize(tokenizedTitles)
+
+        #WRITING TO FINAL FILE
+
+        content = " ".join(finalWords) #words for each articles (EACH DOC)
+        finaldocs.update({docID:titles})
+        finaldocs.update({"content":content})
+        docID+=1
+        #makeFile(name)
+
+        #CREATING LEXICON(CONTENT):
+        for word in finalWords:
+            if(word in lexicon):
+                pass
+            else:
+                lexicon.update({word:wordID})
+                wordID+=1
+        
+        #CREATING LEXICON(TITLE):
+        for word in finalWords:
+            if(word in titlelex):
+                pass
+            else:
+                titlelex.update({word:titleID})
+                titleID+=1
+
+        content = content.split()
+        used_words=[]
+        innerdict = {}
+        for index in range (len(content)):   #accesses each word of content 
+            counter = 0      
+            if(content[index] in lexicon and (content[index] not in used_words)):
+                    #newwordID = lexicon.get(content[i])
+                counter +=1
+                position = index
+                hitlist = []
+                hitlist.append(position)
+                used_words.append(content[index])
+                for k in range(position+1, len(content)):
+                    if (content[k] == content[index]):
+                        counter+=1
+                        position = k
+                        hitlist.append(position)
+                hitlist.append(counter)
+                innerdict.update({lexicon.get(content[index]):hitlist})
+        outerdict.update({docID-1:innerdict})
+
+
+
+#WRITING FWDINDEX TO FILE:        
+
+json_object = json.dumps(outerdict)
+
+with open("fwdindex1.json", "w", encoding='utf-8') as finalfwdindex:
+    finalfwdindex.write(json_object)
+
+
+
+#writing LEXICON TO FILE:
+
+json_object = json.dumps(lexicon)
+
+with open("finallexicon.json", "w", encoding='utf-8') as finalfile:
+    finalfile.write(json_object)
