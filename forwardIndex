@@ -1,0 +1,188 @@
+#FOR CLEANING DATASET: tokenized, stop words removed, lemmatized. final lexicon written to a text file
+#done in chunks of files as dataset too large
+import os
+import json 
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.corpus import wordnet
+
+from nltk.stem import WordNetLemmatizer
+
+
+tokens = [] #for tokenized words
+withoutStopWords = []
+
+lemm = WordNetLemmatizer()
+
+stop_words = stopwords.words('english') 
+
+mypath = "E:\sample" #folder containing json files 
+directories = os.listdir(mypath)
+lexicon = {}
+finalWords=[]
+docID = 0
+
+finaldocs = {}
+titles = "a" #will have title for each doc (dictionary)
+
+lexicon= {}
+wordID = 0
+
+dictList= []
+fwdindex = {}
+
+
+def makeFile(name):
+    json_object = json.dumps(finaldocs)
+    with open(name, "a", encoding='utf-8') as finalfile:
+        finalfile.write(json_object)
+
+def createLexicon(wordlist, wordID):
+    for word in wordlist:
+        if(word in lexicon):
+            pass
+        else:
+            lexicon.update({word:wordID})
+            wordID+=1
+
+
+finalpath = "E:\codes\python\\finalfiles"
+
+#TOKENS & WITHOUTSTOPWORDS: in ONE iteration, needs to have content of ONE ARTICLE (dictionary!)
+#FINALDOCS: in ONE iteration, needs to have content OF ONE JSON FILE!!
+
+for file in directories: #369, 911truth
+    name = finalpath+ "\\" +file
+    file = mypath+"\\"+file
+    myfile = open(file)
+    data = json.load(myfile) #returns a list(of dictionaries?)
+    for i in data: #i=each article (each dictionary) in data
+        finalWords.clear()
+        finaldocs.clear()
+        tokens.clear()
+        withoutStopWords.clear()
+        titles = i["title"]
+        tokens.append(word_tokenize(i["content"])) #list of lists
+        for lists in tokens: 
+            for word in lists:
+                if (word.isalnum() and word.casefold() not in stop_words):
+                    withoutStopWords.append(word)
+        withoutStopWords = nltk.pos_tag(withoutStopWords) #part of speech tags added
+        for word in withoutStopWords:
+            if(word[1].startswith('J')):
+                pos = wordnet.ADJ
+            elif(word[1].startswith('V')):
+                pos = wordnet.VERB
+            elif(word[1].startswith('R')):
+                pos = wordnet.ADV
+            else:
+                pos = wordnet.NOUN
+            finalWords.append(lemm.lemmatize(word[0], pos))
+
+        #WRITING TO FINAL FILE
+
+        content = " ".join(finalWords) #words for each articles (EACH DOC)
+        finaldocs.update({docID:titles})
+        finaldocs.update({"content":content})
+        docID+=1
+        makeFile(name)
+
+        #CREATING LEXICON:
+        for word in finalWords:
+            if(word in lexicon):
+                pass
+            else:
+                lexicon.update({word:wordID})
+                wordID+=1
+
+        i = 0
+        content = content.split()
+        used_words=[]
+        innerdict = {}
+        outerdict = {}
+        for index in range (len(content)):   #accesses each word of content 
+            counter = 0      
+            if(content[index] in lexicon and (content[index] not in used_words)):
+                    #newwordID = lexicon.get(content[i])
+                counter +=1
+                position = index
+                hitlist = []
+                hitlist.append(position)
+                used_words.append(content[index])
+                # for i in finaldocs:
+                #     for j in finaldocs[i].split():
+                #         if content[index] == j:
+                #             docCheck = j
+                for k in range(position+1, len(content)):
+                    if (content[k] == content[index]):
+                        counter+=1
+                        position = k
+                        hitlist.append(position)
+                hitlist.append(counter)
+                innerdict.update({lexicon.get(content[index]):hitlist})
+                dictList.append(innerdict)
+        outerdict.update({docID-1:dictList})
+
+        print(outerdict)
+        
+
+
+
+
+
+
+
+# for i in data:
+#     tokens.append(word_tokenize(i["content"]))
+
+
+# for word in tokens:
+#     for j in word:
+#         if (j.isalnum() and j.casefold() not in stop_words):
+#             withoutStopWords.append(j)
+
+
+
+# withoutStopWords = nltk.pos_tag(withoutStopWords) #part of speech tags added
+
+
+# for word in withoutStopWords:
+#     if(word[1].startswith('J')):
+#         pos = wordnet.ADJ
+#     elif(word[1].startswith('V')):
+#         pos = wordnet.VERB
+#     elif(word[1].startswith('R')):
+#         pos = wordnet.ADV
+#     else:
+#         pos = wordnet.NOUN
+#     finalWords.append(lemm.lemmatize(word[0], pos))
+
+# #final words: complete list of words in file
+
+
+json_object = json.dumps(lexicon)
+
+with open("finallexicon.json", "w", encoding='utf-8') as finalfile:
+    finalfile.write(json_object)
+
+
+
+
+file1 = open("final.txt", "a", encoding='utf-8')
+
+for word in finalWords:
+    word=word.lower()
+    file1.write(word)
+    file1.write(" ")
+
+# doc: FINAL WORDS
+# dictionary: {doc title: [docID, {wordID: [pos, pos, pos], wordID2: [pos, pos, pos]], doc title:    }
+
+    
+
+#lexicon: PYTHON, using json files, store as a dictionary in unhi json files 
+
+
+
+
