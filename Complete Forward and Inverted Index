@@ -53,10 +53,10 @@ def lemmatize(wordlist):
         wordsfinal.append(lemm.lemmatize(word[0], pos))
     return wordsfinal
 
-def makeFile(name):
-    json_object = json.dumps(finaldocs)
-    with open(name, "a", encoding='utf-8') as finalfile:
-        finalfile.write(json_object)
+#def makeFile(name):
+#    json_object = json.dumps(finaldocs)
+#    with open(name, "a", encoding='utf-8') as finalfile:
+#        finalfile.write(json_object)
 
 
 def createlexicon(wordlist):
