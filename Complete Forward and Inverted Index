@@ -152,7 +152,7 @@ def writeFiles(dict, filename):
     with open(filename, "w", encoding='utf-8') as finalfile:
         finalfile.write(json_object)
 
-#SPECIFYING PATHS OF DATA:
+##SPECIFYING PATHS OF DATA:
 
 destpath = "E:\codes\python\cleanfiles" #PATH for folder where final, tokenized content of docs will be stored
 sourcepath = "E:\sample" #folder containing data files
