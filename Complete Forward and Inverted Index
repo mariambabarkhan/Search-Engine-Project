@@ -53,12 +53,6 @@ def lemmatize(wordlist):
         wordsfinal.append(lemm.lemmatize(word[0], pos))
     return wordsfinal
 
-#def makeFile(name):
-#    json_object = json.dumps(finaldocs)
-#    with open(name, "a", encoding='utf-8') as finalfile:
-#        finalfile.write(json_object)
-
-
 def createlexicon(wordlist):
     global wordID
     for word in wordlist:
@@ -103,28 +97,6 @@ def createFwdIndex(content,dictionary):
             hitlist.append(counter)
             innerdict.update({temp.get(content[index]):hitlist})
     dictionary.update({docID-1:innerdict})
-
-def createFwdIndexTitle(content):
-    global fwdIndexTitle
-    content = content.split()
-    used_words=[]
-    innerdict = {}
-    for index in range (len(content)):   #accesses each word of content 
-        counter = 0      
-        if(content[index] in titlelex and (content[index] not in used_words)):
-            counter +=1
-            position = index
-            hitlist = []
-            hitlist.append(position)
-            used_words.append(content[index])
-            for k in range(position+1, len(content)):
-                if (content[k] == content[index]):
-                    counter+=1
-                    position = k
-                    hitlist.append(position)
-            hitlist.append(counter)
-            innerdict.update({titlelex.get(content[index]):hitlist})
-    fwdIndexTitle.update({docID-1:innerdict})
 
 
 def createInvertedIndex(word,dictionary):
