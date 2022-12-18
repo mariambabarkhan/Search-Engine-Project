@@ -1,7 +1,7 @@
 import os
 import json 
 import nltk
-#	@@ -10,179 +8,142 @@ from nltk.corpus import wordnet
+from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
