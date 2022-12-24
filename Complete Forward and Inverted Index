@@ -18,7 +18,9 @@ titlelex = {}       #lexicon for titles
 fwdIndexContent = {}
 fwdIndexTitle = {}
 invertedIndexContent = {}
-invertedIndexTitle = {}     
+invertedIndexTitle = {}
+docindex = {}
+filenum = -1
 
 
 #FUNCTIONS:
@@ -112,14 +114,24 @@ def createInvertedIndex(word,dictionary):
             doclist.append(keys)
     dictionary.update({wordID:doclist})
 
+def createDocIndex(dictionary, filenumber,docID):
+        global docindex
+        docinfo = []
+        docinfo.append(dictionary.get("url"))
+        docinfo.append(dictionary.get("title"))
+        docinfo.append(filenumber)
+        docindex.update({docID:docinfo})
+
 filename1 = "fwdIndexContentFinal.json"     
 filename2 = "lexiconFinal.json"         #names of final files to be passed to function
 filename3 = "titlelexFinal.json"
 filename4 = "invertedIndexContentFinal.json"
 filename5 = "fwdIndexTitleFinal.json"
 filename6 = "invertedIndexTitleFinal.json"
+filename7 = "docIndexFinal.json"
 
 def writeFiles(dict, filename):
+    filename = finalpath + "\\" + filename
     json_object = json.dumps(dict)
     with open(filename, "w", encoding='utf-8') as finalfile:
         finalfile.write(json_object)
@@ -128,7 +140,7 @@ def writeFiles(dict, filename):
 
 destpath = "E:\codes\python\cleanfiles" #PATH for folder where final, tokenized content of docs will be stored
 sourcepath = "E:\sample" #folder containing data files
-
+finalpath = "E:\indexfiles"
 
 #Processing:
 
@@ -137,7 +149,9 @@ for file in os.listdir(sourcepath): #369, 911truth
     file = sourcepath+"\\"+file
     myfile = open(file)
     data = json.load(myfile) #returns a list(of dictionaries?)
+    filenum+=1
     for dict in data: #i=each article (each dictionary) in data
+        createDocIndex(dict, filenum,docID)
         finaldocs.clear()
 
         #TOKENIZING CONTENT:
@@ -179,3 +193,4 @@ writeFiles(titlelex, filename3)
 writeFiles(invertedIndexContent,filename4)
 writeFiles(fwdIndexTitle,filename5)
 writeFiles(invertedIndexTitle,filename6)
+writeFiles(docindex, filename7)
