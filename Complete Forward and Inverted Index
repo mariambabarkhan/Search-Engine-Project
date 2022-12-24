@@ -37,7 +37,8 @@ def tokenize(dict, name):
         for word in lists:
             if (word.isalnum() and word.casefold() not in stop_words):
                 noStopWords.append(word)
-    return noStopWords
+    final = lemmatize(noStopWords)
+    return final
 
 def lemmatize(wordlist):
     lemm = WordNetLemmatizer()
@@ -73,31 +74,29 @@ def createTitleLex(wordlist):
             titlelex.update({word:titleID})
             titleID+=1
 
-def createFwdIndex(content,dictionary):
+def createFwdIndex(content,dictionary, name):
     global fwdIndexContent
     temp = ""
-    if dictionary == fwdIndexContent:
+    if name == "content":
         temp = lexicon
     else:
         temp = titlelex
-    content = content.split()
-    used_words=[]
     innerdict = {}
     for index in range (len(content)):   #accesses each word of content 
-        counter = 0      
-        if(content[index] in temp and (content[index] not in used_words)):
-            counter +=1
-            position = index
+        counter = 0
+        ID = temp.get(content[index])
+        position = index
+        if innerdict.get(ID) is None:
+            counter+=1
             hitlist = []
             hitlist.append(position)
-            used_words.append(content[index])
-            for k in range(position+1, len(content)):
-                if (content[k] == content[index]):
-                    counter+=1
-                    position = k
-                    hitlist.append(position)
             hitlist.append(counter)
-            innerdict.update({temp.get(content[index]):hitlist})
+            innerdict.update({ID:hitlist})
+        else:
+            counter=innerdict[ID].pop()
+            counter+=1
+            innerdict.get(ID).append(position)
+            innerdict.get(ID).append(counter)         
     dictionary.update({docID-1:innerdict})
 
 
@@ -155,18 +154,12 @@ for file in os.listdir(sourcepath): #369, 911truth
         finaldocs.clear()
 
         #TOKENIZING CONTENT:
-        tokenizedContent = tokenize(dict, "content")
-        finalWords = lemmatize(tokenizedContent)
+        finalWords = tokenize(dict, "content")
 
         #TOKENIZING TITLES:
-        tokenizedTitles = tokenize(dict, "title")
-        finalTitles = lemmatize(tokenizedTitles)
+        finalTitles = tokenize(dict, "title")
 
         #WRITING TOKENIZED CONTENT TO FINAL FILE
-
-        content = " ".join(finalWords) #words for each articles (EACH DOC)
-        contentTitles = " ".join(finalTitles)
-        titleContent = " ".join(finalTitles)
         finaldocs.update({docID:dict["title"]})
         finaldocs.update({"content":content})
         docID+=1
@@ -175,8 +168,8 @@ for file in os.listdir(sourcepath): #369, 911truth
         # #CREATING lexiconS:
         createlexicon(finalWords)
         createTitleLex(finalTitles)        
-        createFwdIndex(content,fwdIndexContent)
-        createFwdIndex(titleContent,fwdIndexTitle)
+        createFwdIndex(finalWords,fwdIndexContent,"content")
+        createFwdIndex(finalTitles,fwdIndexTitle, "title")
 
     #CREATING INVERTED INDEX:
     for lexi in lexicon:
