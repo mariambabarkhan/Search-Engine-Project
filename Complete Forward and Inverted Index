@@ -35,6 +35,7 @@ def tokenize(dict, name):
     stop_words = stopwords.words('english') 
     for lists in tokens: 
         for word in lists:
+            word = word.lower()
             if (word.isalnum() and word.casefold() not in stop_words):
                 noStopWords.append(word)
     final = lemmatize(noStopWords)
@@ -62,6 +63,7 @@ def createlexicon(wordlist):
         if(word in lexicon):
             pass
         else:
+            word = word.lower()
             lexicon.update({word:wordID})
             wordID+=1
 
@@ -71,6 +73,7 @@ def createTitleLex(wordlist):
         if(word in titlelex):
             pass
         else:
+            word = word.lower()
             titlelex.update({word:titleID})
             titleID+=1
 
