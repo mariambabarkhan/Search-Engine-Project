@@ -1,11 +1,13 @@
 import os
+import time
 import json 
 import nltk
+import re
 from nltk.corpus import wordnet
 from nltk.stem import WordNetLemmatizer
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
-from nltk.corpus import wordnet
+from collections import Counter
 
 
 #global data:
@@ -18,28 +20,11 @@ titlelex = {}       #lexicon for titles
 fwdIndexContent = {}
 fwdIndexTitle = {}
 invertedIndexContent = {}
-invertedIndexTitle = {}
-docindex = {}
-filenum = -1
-
+invertedIndexTitle = {}     
+stop_words = set(stopwords.words('english')) 
+stopwords_dict = Counter(stop_words)
 
 #FUNCTIONS:
-
-def tokenize(dict, name):
-    tokens = []
-    if(name=="content"):
-        tokens.append(word_tokenize(dict["content"])) #list of lists
-    else:
-        tokens.append(word_tokenize(dict["title"])) #list of lists
-    noStopWords = []
-    stop_words = stopwords.words('english') 
-    for lists in tokens: 
-        for word in lists:
-            word = word.lower()
-            if (word.isalnum() and word.casefold() not in stop_words):
-                noStopWords.append(word)
-    final = lemmatize(noStopWords)
-    return final
 
 def lemmatize(wordlist):
     lemm = WordNetLemmatizer()
@@ -57,37 +42,66 @@ def lemmatize(wordlist):
         wordsfinal.append(lemm.lemmatize(word[0], pos))
     return wordsfinal
 
+
+def tokenize(dict):
+    tokens =[]
+        #dict[content] is a string
+        # content = re.sub("[^\w\s]", "", dict["content"])
+        # fincontent = [word.lower() for word in content.split() if word.casefold() not in stopwords_dict ]
+        # tokens.extend(fincontent)
+    content = dict["content"] + " " + dict["title"]
+    tokens.extend(word_tokenize(content)) #list of lists
+    noStopWords = []
+    for word in tokens:
+        #word = word.lower()
+        # if (not(word.isalnum()) or word.casefold() in stop_words):
+        #     tokens.remove(word)
+        if (word.isalnum() and word.casefold() not in stop_words):
+            noStopWords.append(word)
+    final = lemmatize(noStopWords)
+    return final
+
 def createlexicon(wordlist):
     global wordID
     for word in wordlist:
-        if(word in lexicon):
+        if lexicon.get(word) is not None:
             pass
         else:
-            word = word.lower()
             lexicon.update({word:wordID})
             wordID+=1
 
-def createTitleLex(wordlist):
-    global titleID
-    for word in wordlist:
-        if(word in titlelex):
-            pass
-        else:
-            word = word.lower()
-            titlelex.update({word:titleID})
-            titleID+=1
 
-def createFwdIndex(content,dictionary, name):
+
+# def createFwdIndex():
+#     global fwdIndexContent
+#     innerdict = {}
+#     position = 0
+#     for keys in lexicon:
+#         ID = lexicon[keys]
+#         counter = 0
+#         position+=1
+#         if innerdict.get(ID) is None:
+#             counter+=1
+#             hitlist = []
+#             hitlist.append(position-1)
+#             hitlist.append(counter)
+#             innerdict.update({ID:hitlist})
+#         else:
+#             counter=innerdict[ID].pop()
+#             counter+=1
+#             innerdict.get(ID).append(position-1)
+#             innerdict.get(ID).append(counter)         
+#     fwdIndexContent.update({docID:innerdict})
+
+
+
+
+def createFwdIndex(content,dictionary):
     global fwdIndexContent
-    temp = ""
-    if name == "content":
-        temp = lexicon
-    else:
-        temp = titlelex
     innerdict = {}
     for index in range (len(content)):   #accesses each word of content 
         counter = 0
-        ID = temp.get(content[index])
+        ID = dictionary.get(content[index])
         position = index
         if innerdict.get(ID) is None:
             counter+=1
@@ -100,22 +114,34 @@ def createFwdIndex(content,dictionary, name):
             counter+=1
             innerdict.get(ID).append(position)
             innerdict.get(ID).append(counter)         
-    dictionary.update({docID-1:innerdict})
+    fwdIndexContent.update({docID-1:innerdict})
 
 
-def createInvertedIndex(word,dictionary):
-    doclist = []
-    wordID = word
-    temp = ""
-    if dictionary == invertedIndexContent:
-        temp = fwdIndexContent
-    else:
-        temp = fwdIndexTitle
-    for keys in temp:
-        if wordID in temp.get(keys):
-            doclist.append(keys)
-    dictionary.update({wordID:doclist})
+def createInvertedIndex():
+    for keys in fwdIndexContent: #each key: docID
+        inner = fwdIndexContent.get(keys)#dict of each doc, with words + positions 
+        for key2 in inner: #WORDS THAT ARE IN THE DOCUMENT
+            if invertedIndexContent.get(key2) is not None:
+                invertedIndexContent[key2].append(keys)
+            else:
+                list1 = [keys]
+                invertedIndexContent.update({key2:list1})
 
+filename1 = "fwdIndexContentFinal.json"     
+filename2 = "lexiconFinal.json"         #names of final files to be passed to function
+#filename3 = "titlelexFinal.json"
+filename4 = "invertedIndexContentFinal.json"
+#filename5 = "fwdIndexTitleFinal.json"
+#filename6 = "invertedIndexTitleFinal.json"
+filename7 = "docIndexFinal.json"
+
+def writeFiles(dict, filename):
+    filename = samplepath + "\\" + filename
+    json_object = json.dumps(dict)
+    with open(filename, "w", encoding='utf-8') as finalfile:
+        finalfile.write(json_object)
+
+docindex = {}
 def createDocIndex(dictionary, filenumber,docID):
         global docindex
         docinfo = []
@@ -124,69 +150,69 @@ def createDocIndex(dictionary, filenumber,docID):
         docinfo.append(filenumber)
         docindex.update({docID:docinfo})
 
-filename1 = "fwdIndexContentFinal.json"     
-filename2 = "lexiconFinal.json"         #names of final files to be passed to function
-filename3 = "titlelexFinal.json"
-filename4 = "invertedIndexContentFinal.json"
-filename5 = "fwdIndexTitleFinal.json"
-filename6 = "invertedIndexTitleFinal.json"
-filename7 = "docIndexFinal.json"
-
-def writeFiles(dict, filename):
-    filename = finalpath + "\\" + filename
-    json_object = json.dumps(dict)
-    with open(filename, "w", encoding='utf-8') as finalfile:
-        finalfile.write(json_object)
 
 ##SPECIFYING PATHS OF DATA:
 
 destpath = "E:\codes\python\cleanfiles" #PATH for folder where final, tokenized content of docs will be stored
-sourcepath = "E:\sample" #folder containing data files
+sourcepath = "E:\sample1" #folder containing data files
 finalpath = "E:\indexfiles"
+samplepath = "E:\check"
+
 
 #Processing:
 
+filenum = -1
+
+start = time.time()
 for file in os.listdir(sourcepath): #369, 911truth
     name = destpath+ "\\" +file
     file = sourcepath+"\\"+file
     myfile = open(file)
     data = json.load(myfile) #returns a list(of dictionaries?)
     filenum+=1
-    for dict in data: #i=each article (each dictionary) in data
-        createDocIndex(dict, filenum,docID)
+    for dict in data: #each dictionary represents ONE article
+        # createDocIndex(dict, filenum,docID)
         finaldocs.clear()
 
-        #TOKENIZING CONTENT:
-        finalWords = tokenize(dict, "content")
+        # TOKENIZING CONTENT:
+        #tokenizetime = time.time()
+        finalWords = tokenize(dict)
+        #print("tokenizing time for 1 file:", time.time()-tokenizetime)
+        # TOKENIZING TITLES:
+        #finalTitles = tokenize(dict, "title")
 
-        #TOKENIZING TITLES:
-        finalTitles = tokenize(dict, "title")
-
-        #WRITING TOKENIZED CONTENT TO FINAL FILE
-        finaldocs.update({docID:dict["title"]})
-        finaldocs.update({"content":content})
+#         #WRITING TOKENIZED CONTENT TO FINAL FILE
+        # finaldocs.update({docID:dict["title"]})
+        # finaldocs.update({"content":content})
         docID+=1
-        #makeFile(name)
+#         #makeFile(name)
 
-        # #CREATING lexiconS:
+#         #CREATING lexiconS:
+        #lextime = time.time()
         createlexicon(finalWords)
-        createTitleLex(finalTitles)        
-        createFwdIndex(finalWords,fwdIndexContent,"content")
-        createFwdIndex(finalTitles,fwdIndexTitle, "title")
-
-    #CREATING INVERTED INDEX:
-    for lexi in lexicon:
-        createInvertedIndex(lexicon[lexi],invertedIndexContent)
-    for lexi in titlelex:
-        createInvertedIndex(titlelex[lexi],invertedIndexTitle)
-
+        #print("lextime:", time.time()-lextime)
+        #createTitleLex(finalTitles)  
+        #fwdindex = time.time()      
+        # createFwdIndex(finalWords, lexicon)
+        #print("lextime:", time.time()-lextime)
+       # createFwdIndex(finalTitles,fwdIndexTitle, "title")
+    myfile.close()
+print("time for token+lex+fwd", time.time()-start)
 
 
+#CREATING INVERTED INDEX:
+invIndextime = time.time()
+createInvertedIndex()
+print("INV INDEX TIME:", time.time()-invIndextime)
 
-writeFiles(fwdIndexContent, filename1)
-writeFiles(lexicon, filename2)
-writeFiles(titlelex, filename3)
-writeFiles(invertedIndexContent,filename4)
-writeFiles(fwdIndexTitle,filename5)
-writeFiles(invertedIndexTitle,filename6)
-writeFiles(docindex, filename7)
+
+
+
+#print(invertedIndexContent)
+# writeFiles(fwdIndexContent, filename1)
+# writeFiles(lexicon, filename2)
+#writeFiles(titlelex, filename3)/
+# writeFiles(invertedIndexContent,filename4)
+#writeFiles(fwdIndexTitle,filename5)
+#writeFiles(invertedIndexTitle,filename6)
+# writeFiles(docindex, filename7)
