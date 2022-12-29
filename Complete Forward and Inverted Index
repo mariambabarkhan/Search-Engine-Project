@@ -150,9 +150,8 @@ def createDocIndex(dictionary, filenumber,docID):
 
 ##SPECIFYING PATHS OF DATA:
 
-destpath = "E:\codes\python\cleanfiles" #PATH for folder where final, tokenized content of docs will be stored
 sourcepath = "E:\samplef" #folder containing data files
-finalpath = "E:\indexfilesfinal"
+finalpath = "E:\indexfilesfinal"  #PATH for folder where final, tokenized content of docs will be stored
 
 
 
@@ -162,7 +161,6 @@ filenum = -1
 
 start = time.time()
 for file in os.listdir(sourcepath): #369, 911truth
-    name = destpath+ "\\" +file
     file = sourcepath+"\\"+file
     myfile = open(file)
     data = json.load(myfile) #returns a list(of dictionaries?)
@@ -178,7 +176,7 @@ for file in os.listdir(sourcepath): #369, 911truth
 
         docID+=1
 
-#         #CREATING lexiconS:
+        #CREATING lexicons:
         createlexicon(finalWords, "content")
         createlexicon(finalTitles, "title")  
         createFwdIndex(finalWords,"content")
