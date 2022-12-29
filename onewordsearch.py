@@ -1,31 +1,32 @@
 import json
 import re
 import math
+import time
 from nltk.stem.snowball import SnowballStemmer
 
 
 snow_stemmer = SnowballStemmer(language='english')
 
 
-file1 = open("E:\check1\cclexiconFinal.json")
+file1 = open("E:\indexfilesfinal\lexiconFinal.json")
 lex = json.load(file1)
 
-file2 = open("E:\check1\ccinvertedIndexContentFinal.json")
+file2 = open("E:\indexfilesfinal\invertedIndexContentFinal.json")
 invIndex = json.load(file2)
 
-file3 =  open("E:\check1\ccfwdIndexContentFinal.json")
+file3 =  open("E:\indexfilesfinal\\fwdIndexContentFinal.json")
 fwdIndex = json.load(file3)
 
-file4 = open("E:\check1\ccdocIndexFinal.json")
+file4 = open("E:\indexfilesfinal\docIndexFinal.json")
 docIndex = json.load(file4)
 
-file4 = open("E:\check1\cctitlelexFinal.json")
+file4 = open("E:\indexfilesfinal\\titlelexFinal.json")
 titlelex = json.load(file4)
 
-file4 = open("E:\check1\ccfwdIndexTitleFinal.json")
+file4 = open("E:\indexfilesfinal\\fwdIndexTitleFinal.json")
 titlefwd = json.load(file4)
 
-file4 = open("E:\check1\ccinvertedIndexTitleFinal.json")
+file4 = open("E:\indexfilesfinal\invertedIndexTitleFinal.json")
 titleinv = json.load(file4)
 
 docScores = {}
@@ -36,7 +37,6 @@ def titlesearch(wordlist):
         if titlelex.get(i) is not None:
             ID = str(titlelex.get(i)) #getting ID from lexicon
             doclist = titleinv.get(ID) #LIST OF DOCS THAT HAVE WORD IN TITLE
-    print("Title docs:", len(doclist))
     for i in doclist:
         docScores.update({i:1})
 
@@ -66,7 +66,6 @@ def search(input):
 
 def sortingdocs(): #sorting docs for multiple word query
     finaldocs = sorted(docScores.items(), key=lambda i:i[1], reverse=True)
-    print(docScores.values())
     print(len(finaldocs), "results found")
     for i in finaldocs:
         print(docIndex.get(str(i[0]))[1])
@@ -79,12 +78,14 @@ def getRank(doclist, ID):
     totaldoc = len(fwdIndex)
     for i in doclist:
         totalwords = len(fwdIndex.get(str(i)))
-        termfreq = (fwdIndex.get(str(i)).get(ID)[-1])/(totalwords) #*need to divide by total num of words in doc
+        termfreq = (fwdIndex.get(str(i)).get(ID))/(totalwords) #*need to divide by total num of words in doc
         idf = math.log((totaldoc/termdoc))
         tfidf = termfreq*idf
         if docScores.get(i) is not None: 
             docScores[i]+=tfidf
         else:
             docScores.update({i:tfidf})
-    
-search("donald trump")
+
+start = time.time()    
+search("usa afghanistan")
+print("time:", time.time()-start)
