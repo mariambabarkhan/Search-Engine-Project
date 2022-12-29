@@ -39,7 +39,6 @@ def stemming(wordlist):
 #titlewords = ""
 def tokenize(dict, name):
     tokens =[]
-    #content = dict["content"] + " " + dict["title"]
     if name=="content":
         content = dict["content"]
     else:
@@ -84,16 +83,11 @@ def createFwdIndex(content, name):
             #position = index
             if innerdict.get(ID) is None:
                 counter+=1
-                # hitlist = []
-                # hitlist.append(position)
-                # hitlist.append(counter)
                 innerdict.update({ID:counter})
             else:
                 counter=innerdict.get(ID)
                 counter+=1
-                innerdict[ID]=counter
-                # innerdict.get(ID).append(position)
-                # innerdict.get(ID).append(counter)         
+                innerdict[ID]=counter         
         fwdIndexContent.update({docID-1:innerdict})
     else:
         for index in range (len(content)):   #accesses each word of content 
@@ -102,22 +96,13 @@ def createFwdIndex(content, name):
             position = index
             if innerdict.get(ID) is None:
                 counter+=1
-                # hitlist = []
-                # hitlist.append(position)
-                # hitlist.append(counter)
                 innerdict.update({ID:counter})
             else:
                 counter=innerdict.get(ID)
                 counter+=1
-                innerdict[ID]=counter
-                # innerdict.get(ID).append(position)
-                # innerdict.get(ID).append(counter)         
+                innerdict[ID]=counter       
         fwdIndexTitle.update({docID-1:innerdict})
-
-
-#FWD INDEX STRUCTURE: {docID: {wordID: hits, wordID: hits}
-#                      docID: {wordID: hits, wordID: hits}}
-
+        
 def createInvertedIndex(name):
     if name=="content":
         for keys in fwdIndexContent: #each key: docID
@@ -183,48 +168,33 @@ for file in os.listdir(sourcepath): #369, 911truth
     data = json.load(myfile) #returns a list(of dictionaries?)
     filenum+=1
     for dict in data: #each dictionary represents ONE article
-        #createDocIndex(dict, filenum,docID)
-        #finaldocs.clear()
+        createDocIndex(dict, filenum,docID)
 
         # TOKENIZING CONTENT:
-        #tokenizetime = time.time()
         finalWords = tokenize(dict, "content")
-        #print("tokenizing time for 1 file:", time.time()-tokenizetime)
+        
         # TOKENIZING TITLES:
         finalTitles = tokenize(dict, "title")
 
-#         #WRITING TOKENIZED CONTENT TO FINAL FILE
-        # finaldocs.update({docID:dict["title"]})
-        # finaldocs.update({"content":content})
         docID+=1
-#         #makeFile(name)
 
 #         #CREATING lexiconS:
-        #lextime = time.time()
         createlexicon(finalWords, "content")
-        #print("lextime:", time.time()-lextime)
         createlexicon(finalTitles, "title")  
-        #fwdindex = time.time()      
         createFwdIndex(finalWords,"content")
-        #print("lextime:", time.time()-lextime)
         createFwdIndex(finalTitles, "title")
     myfile.close()
-print("time for token+lex+fwd", time.time()-start)
 
 
 #CREATING INVERTED INDEX:
-invIndextime = time.time()
 createInvertedIndex("content")
-print("INV INDEX content TIME:", time.time()-invIndextime)
-invIndextime = time.time()
 createInvertedIndex("title")
-print("INV INDEX content TIME:", time.time()-invIndextime)
 
 
 writeFiles(fwdIndexContent, filename1)
 writeFiles(lexicon, filename2)
-#writeFiles(titlelex, filename3)
+writeFiles(titlelex, filename3)
 writeFiles(invertedIndexContent,filename4)
-#writeFiles(fwdIndexTitle,filename5)
-#writeFiles(invertedIndexTitle,filename6)
-#writeFiles(docindex, filename7)
+writeFiles(fwdIndexTitle,filename5)
+writeFiles(invertedIndexTitle,filename6)
+writeFiles(docindex, filename7)
